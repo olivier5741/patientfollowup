@@ -1,0 +1,12 @@
+{
+  "timeZone": "Europe/Brussels",
+  "dependencies": {
+    "libraries": [{
+      "userSymbol": "SuiviPatientCovidEnMRS",
+      "libraryId": "1J4KQFp_kX-jPI94wymaUveIqYVGDJ08NHv7FajFcvlUhm61kPJWIyJXd",
+      "version": "31"
+    }]
+  },
+  "exceptionLogging": "STACKDRIVER",
+  "runtimeVersion": "V8"
+}
