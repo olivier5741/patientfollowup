@@ -10,20 +10,28 @@ function wardRoundSheetArchived(){
 }
 
 function wardRoundSheetIdAndNameArray() {
-  const regExp = new RegExp("^_tournée.*$")
+  const regExp = new RegExp("^_tournÃ©e.*$")
   return SpreadsheetApp.getActiveSpreadsheet()
   .getSheets()
   .map(s => [s.getSheetId(),s.getName()] )           
-  .filter(n => regExp.exec(n[1]) );
+  .filter(n => regExp.exec(n[1]))
+  .sort(function(a, b) {
+             return a[0] - b[0];
+       });
 }
 
 function refreshWardRoundInSystem(){
   const systemSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("zzz_system");
+  const wardRoundIdxSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("zzz_system_ward_round_idx");
+
   const a = wardRoundSheetIdAndNameArray();
   systemSheet.getRange(3,5,1000,2).clearContent();
+  wardRoundIdxSheet.getRange(2,1,1000,2).clearContent();
   
-  if(a.length > 0)
+  if(a.length > 0){
     systemSheet.getRange(3,5,a.length,2).setValues(a);
+    wardRoundIdxSheet.getRange(2,1,a.length,2).setValues(a);
+  }    
 }
 
 function createWardRoundSheet(){  
@@ -31,22 +39,22 @@ function createWardRoundSheet(){
   const ui = SpreadsheetApp.getUi();
   
   const date = new Date();
-  const sheetNameSuggestion = "_tournée " + Utilities.formatDate(date, "GMT+1", "yyyy-MM-dd") 
-                   + " ou " + "_tournée " +  Utilities.formatDate(date, "GMT+1", "yyyy-MM-dd HH") + "h";
+  const sheetNameSuggestion = "_tournÃ©e " + Utilities.formatDate(date, "GMT+1", "yyyy-MM-dd") 
+                   + " ou " + "_tournÃ©e " +  Utilities.formatDate(date, "GMT+1", "yyyy-MM-dd HH") + "h";
   
   let wardRoundNameValid = false;
   let sheetName;
   
   while(wardRoundNameValid == false){
     
-    const response = ui.prompt(`Entrer le nom de la tournée (suggestion: ${sheetNameSuggestion})`, ui.ButtonSet.OK_CANCEL);
+    const response = ui.prompt(`Entrer le nom de la tournÃ©e (suggestion: ${sheetNameSuggestion})`, ui.ButtonSet.OK_CANCEL);
     if (response.getSelectedButton() == ui.Button.CANCEL){
       return;
     }
-    const regExp = new RegExp("^_tournée.*$")
+    const regExp = new RegExp("^_tournÃ©e.*$")
     
     if(regExp.exec(response.getResponseText()) == null){
-      ui.alert("Le nom doit commencer par _tournée", ui.ButtonSet.OK);      
+      ui.alert("Le nom doit commencer par _tournÃ©e", ui.ButtonSet.OK);      
     }else{
       wardRoundNameValid = true;
       sheetName = response.getResponseText();
@@ -57,18 +65,19 @@ function createWardRoundSheet(){
   const currentSpreadSheet = SpreadsheetApp.getActiveSpreadsheet();  
   const sheet = importWardRoundSheetTemplate(currentSpreadSheet);
   sheet.setName(sheetName);  
-  sheet.getRange("B1").setValue(Utilities.formatDate(date, "GMT+1", "dd/MM/yyyy HH:00"));
+  sheet.getRange("C1").setValue(Utilities.formatDate(date, "GMT+1", "dd/MM/yyyy HH:00"));
   
-  const patients = currentSpreadSheet.getRangeByName("SystemPatientSheets").getValues().filter(r => r[2]).map(r => [r[1]]);
+  const patients = currentSpreadSheet.getSheetByName("zzz_system_patient_view")
+                    .getRange("A2:D").getValues().filter(r => r[2]).map(r => [r[1]]);
   
   const nbRowsToKeep = patients.length + 4 + 10;
   sheet.deleteRows(nbRowsToKeep+1,sheet.getLastRow()-nbRowsToKeep);
   
-  const nbColumnsToKeep = 4;
+  const nbColumnsToKeep = 5;
   sheet.deleteColumns(nbColumnsToKeep+1, sheet.getLastColumn()-nbColumnsToKeep);
   
   if(patients.length > 0)
-    sheet.getRange("A5:A"+(patients.length + 4)).setValues(patients);
+    sheet.getRange("C5:C"+(patients.length + 4)).setValues(patients);
   
   sheet.activate(); 
   currentSpreadSheet.moveActiveSheet(2)
@@ -94,21 +103,21 @@ function startWardRoundSheet(){
   const ui = SpreadsheetApp.getUi();
   
   const sheetName = sheet.getName();
-  const regExp = new RegExp("^_tournée.*$")
+  const regExp = new RegExp("^_tournÃ©e.*$")
   
   if(regExp.exec(sheetName) == null){
-    ui.alert("Le fichier n'est pas une tournée. Le nom doit commencer par _tournée", ui.ButtonSet.OK);
+    ui.alert("Le fichier n'est pas une tournÃ©e. Le nom doit commencer par _tournÃ©e", ui.ButtonSet.OK);
     return;
   }
   
   const statusRange = sheet.getRange("B3");
   
-  if(statusRange.getValue() == "Démarrée"){
-    const result = ui.alert("La tournée a déjà été démarrée", ui.ButtonSet.OK);
+  if(statusRange.getValue() == "DÃ©marrÃ©e"){
+    const result = ui.alert("La tournÃ©e a dÃ©jÃ  Ã©tÃ© dÃ©marrÃ©e", ui.ButtonSet.OK);
     return;
   }
   
-  statusRange.setValue("Démarrée")
+  statusRange.setValue("DÃ©marrÃ©e")
   
   const template = importWardRoundSheetTemplate(currentSpreadSheet);
   
@@ -124,11 +133,12 @@ function startWardRoundSheet(){
   
   currentSpreadSheet.deleteSheet(template);
   
-  protectFormulaRangeWithWarning(sheet.getRange("C5:C"));
-  protectFormulaRangeWithWarning(sheet.getRange("E5:AO"));
+  protectFormulaRangeWithWarning(sheet.getRange("A5:B"));
+  protectFormulaRangeWithWarning(sheet.getRange("D5:D"));
+  protectFormulaRangeWithWarning(sheet.getRange("F5:AO"));
   
-  const patientNames = sheet.getRange("A5:A").getValues().map(r => r[0]).filter(n => n != "");
-  const date = sheet.getRange("B1").getValue();
+  const patientNames = sheet.getRange("C5:C").getValues().map(r => r[0]).filter(n => n != "");
+  const date = sheet.getRange("C1").getValue();
   
   for (let key in patientNames)
   {
@@ -149,8 +159,8 @@ function archiveWardRoundSheet(){
   
   const ui = SpreadsheetApp.getUi();
   const result = ui.alert(
-     "Archiver la tournée",
-     "Voulez-vous archiver la tournée : " + sheetName,
+     "Archiver la tournÃ©e",
+     "Voulez-vous archiver la tournÃ©e : " + sheetName,
       ui.ButtonSet.OK_CANCEL);
 
   // Process the user's response.
@@ -159,7 +169,7 @@ function archiveWardRoundSheet(){
   }
   
   const folder = DriveApp.getFileById(currentSpreadSheet.getId()).getParents().next();
-  const archiveFolder = folder.getFoldersByName("Archives").next().getFoldersByName("Tournées").next();
+  const archiveFolder = folder.getFoldersByName("Archives").next().getFoldersByName("TournÃ©es").next();
   
   const pdf = convertSheetToPdf(currentSpreadSheet,sheet,Utilities.formatDate(new Date(), "GMT+1", "yyyy_MM") + sheetName,"H");
   archiveFolder.createFile(pdf);
