@@ -83,14 +83,14 @@ function initialize(libraryName = "", localScriptProperties = PropertiesService.
   const ui = SpreadsheetApp.getUi();
   
   ui.createMenu('SUIVI PATIENT')
-  .addItem('Envoyer la fiche au mÃ©decin traitant',prefix + 'sendMRSPatientSheetByMailToGP')
-  .addItem('CrÃ©er une fiche vierge',prefix + 'createEmptyMRSPatientSheet')
+  .addItem('Envoyer la fiche au médecin traitant',prefix + 'sendMRSPatientSheetByMailToGP')
+  .addItem('Créer une fiche vierge',prefix + 'createEmptyMRSPatientSheet')
   .addItem('Archiver la fiche',prefix + 'archivePatientSheet')  
-  .addItem('GÃ©nÃ©rer les fiches correspondantes',prefix + 'createMRSPatientSheet')
+  .addItem('Générer les fiches correspondantes',prefix + 'createMRSPatientSheet')
   .addSeparator()
-  .addItem("CrÃ©er une tournÃ©e", prefix +  "createWardRoundSheet")  
-  .addItem("DÃ©marrer la tournÃ©e",prefix + "startWardRoundSheet")
-  .addItem('Archiver la tournÃ©e',prefix + 'archiveWardRoundSheet')
+  .addItem("Créer une tournée", prefix +  "createWardRoundSheet")  
+  .addItem("Démarrer la tournée",prefix + "startWardRoundSheet")
+  .addItem('Archiver la tournée',prefix + 'archiveWardRoundSheet')
   .addSeparator()
   .addItem('Trier les onglets alph.',prefix + 'sortSheetsByName')
   .addToUi();

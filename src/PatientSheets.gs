@@ -50,7 +50,7 @@ function importPatientSheetTemplate(destination){
 function createEmptyMRSPatientSheet(){  
   
   const ui = SpreadsheetApp.getUi();
-  const response = ui.prompt('CrÃ©er une nouvelle fiche patient', 'Entrer le nom de la fiche', ui.ButtonSet.OK_CANCEL);
+  const response = ui.prompt('Créer une nouvelle fiche patient', 'Entrer le nom de la fiche', ui.ButtonSet.OK_CANCEL);
   
   if (response.getSelectedButton() == ui.Button.CANCEL){
     return;
@@ -78,8 +78,8 @@ function createMRSPatientSheet(){
   // Demande de confirmation
   const ui = SpreadsheetApp.getUi();
   const result = ui.alert(
-     "GÃ©nÃ©rer fiche(s) patient(s)",
-     `Voulez-vous gÃ©nÃ©rer ${sheetsAmount} fiche(s) patient(s).`,
+     "Générer fiche(s) patient(s)",
+     `Voulez-vous générer ${sheetsAmount} fiche(s) patient(s).`,
       ui.ButtonSet.YES_NO);
 
   // Process the user's response.
@@ -114,7 +114,7 @@ function createMRSPatientSheet(){
     
     newSheet.getRange(rangeToUpdate).setValues(templateValuesCopy)
         
-    currentSpreadSheet.toast(`La fiche patient ${sheetName} a Ã©tÃ© gÃ©nÃ©rÃ©e`,"Fiche gÃ©nÃ©rÃ©e");
+    currentSpreadSheet.toast(`La fiche patient ${sheetName} a été générée`,"Fiche générée");
   }
   
   currentSpreadSheet.deleteSheet(localTemplate)
@@ -142,8 +142,8 @@ function sendMRSPatientSheetByMailToGP() {
   // Demande de confirmation
   const ui = SpreadsheetApp.getUi();
   const result = ui.alert(
-     "Envoi de la fiche au mÃ©decin traitant",
-     `Voulez-vous envoyer la fiche de ${patientName} Ã  l'adresse ${practitionerEmail}.`,
+     "Envoi de la fiche au médecin traitant",
+     `Voulez-vous envoyer la fiche de ${patientName} à l'adresse ${practitionerEmail}.`,
       ui.ButtonSet.YES_NO); // TODO change to YES_CANCEL
 
   // Process the user's response.
@@ -155,8 +155,8 @@ function sendMRSPatientSheetByMailToGP() {
   const message = 
 `Docteur ${practitionerFullName},
   
-Vous trouverez en attachÃ© le compte rendu journalier de votre patient ${patientName} hÃ©bergÃ© ds notre MR(S).
-Nous vous invitons Ã  en prendre connaissance et nous transmettre vos remarques Ã©ventuelles.
+Vous trouverez en attaché le compte rendu journalier de votre patient ${patientName} hébergé ds notre MR(S).
+Nous vous invitons à en prendre connaissance et nous transmettre vos remarques éventuelles.
 
 Pour la MRS,
 ${nurseName}`;
@@ -166,7 +166,7 @@ ${nurseName}`;
   const pdf = convertSheetToPdf(currentSpreadSheet,currentSheet,"Fiche MRS de " + patientName);
   MailApp.sendEmail(practitionerEmail, subject, message, {attachments:pdf});
   
-  currentSpreadSheet.toast('Mail envoyÃ©', 'Mail envoyÃ©');
+  currentSpreadSheet.toast('Mail envoyé', 'Mail envoyé');
 }
 
 function archivePatientSheet(){
