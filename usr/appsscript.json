@@ -1,12 +1,15 @@
 {
   "timeZone": "Europe/Brussels",
-  "dependencies": {
-    "libraries": [{
-      "userSymbol": "SuiviPatientCovidEnMRS",
-      "libraryId": "1J4KQFp_kX-jPI94wymaUveIqYVGDJ08NHv7FajFcvlUhm61kPJWIyJXd",
-      "version": "31"
-    }]
-  },
   "exceptionLogging": "STACKDRIVER",
-  "runtimeVersion": "V8"
+  "runtimeVersion": "V8",
+  "dependencies": {
+    "libraries": [
+      {
+        "userSymbol": "SuiviPatientCovidEnMRS",
+        "libraryId": "1suU9Aea_p7Fxa_nF7683dnDuS6vfuqksTdv7jtjvMW1ZACPc_DzAse2Y",
+        "version": "1",
+        "developmentMode": false
+      }
+    ]
+  }
 }
