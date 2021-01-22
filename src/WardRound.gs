@@ -68,7 +68,15 @@ function createWardRoundSheet(){
   sheet.getRange("C1").setValue(Utilities.formatDate(date, "GMT+1", "dd/MM/yyyy HH:00"));
   
   const patients = currentSpreadSheet.getSheetByName("zzz_system_patient_view")
-                    .getRange("A2:D").getValues().filter(r => r[2]).map(r => [r[1]]);
+                    .getRange("A2:D").getValues().filter(r => r[2])
+                    .sort(function(a,b){
+                      if(a[3] < b[3]) return -1; // sort by room first
+                      if(a[3] > b[3]) return 1;
+                      if(a[1] < b[1]) return -1; // sort by full name
+                      if(a[1] > b[1]) return 1;
+                      return 0;
+                    })
+                    .map(r => [r[1]]);
   
   const nbRowsToKeep = patients.length + 4 + 10;
   sheet.deleteRows(nbRowsToKeep+1,sheet.getLastRow()-nbRowsToKeep);
