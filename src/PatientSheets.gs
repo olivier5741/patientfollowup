@@ -14,33 +14,40 @@ function patientSheetIdAndNameArray() {
   const regExp = new RegExp("^[_z]+.*$")
   return SpreadsheetApp.getActiveSpreadsheet()
   .getSheets()
-  .map(s => [s.getSheetId(),s.getName()] )           
-  .filter(n => !regExp.exec(n[1]) );
-}
-
-// @deprecated
-function patientSheetNames() {
-  const regExp = new RegExp("^[_z]+.*$")
-  return SpreadsheetApp.getActiveSpreadsheet()
-           .getSheets()
-           .map(s => s.getName())           
-           .filter(n => !regExp.exec(n) );
+  .map(s => [s.getSheetId(),s.getName(),s.getRange("D1").getValue(),s.getRange("B2").getValue()] )           
+  .filter(n => !regExp.exec(n[1]) )
+  .sort(function(a, b) {
+             return a[0] - b[0];
+           });
 }
 
 function refreshPatientSheetNames(){
   const systemSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("zzz_system");
+  const patientViewSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("zzz_system_patient_view");
+  const patientIdxNameSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("zzz_system_patient_idx_name"); 
+
   const a = patientSheetIdAndNameArray();
   systemSheet.getRange(3,1,1000,2).clearContent();
+  patientViewSheet.getRange(2,1,1000,4).clearContent();
+  patientIdxNameSheet.getRange(2,1,1000,2).clearContent();
   
-  if(a.length > 0)
-    systemSheet.getRange(3,1,a.length,2).setValues(a);
+  if(a.length > 0){    
+    systemSheet.getRange(3,1,a.length,2).setValues(a.map(r => [r[0],r[1]]));
+    patientViewSheet.getRange(2,1,a.length,4).setValues(a.map(r => [r[0],r[1],r[2]=="oui",r[3]])); // TODO translation harcoded, should be true?false in patient sheet
+
+    const patientIdxName = a.map(r => [r[1],r[0]]).sort(function(a, b) { 
+      return a[0] > b[0] ? 1 : -1;
+    });
+
+    patientIdxNameSheet.getRange(2,1,a.length,2).setValues(patientIdxName);
+  }
 }
 
 function importPatientSheetTemplate(destination){
   
  // TODO change way of coding to call PropertiesService earlier 
  const documentProperties = PropertiesService.getDocumentProperties();
- const source = SpreadsheetApp.openByUrl(documentProperties.getProperty("patientSheetTemplateSpreadsheetUrl"))
+ const source = SpreadsheetApp.openByUrl(documentProperties.getProperty("templateSpreadsheetUrl"))
  const template = source.getSheetByName(documentProperties.getProperty("patientSheetTemplateSheetName"));
  const sheet = template.copyTo(destination);
  copySheetRangeProtectionWarnings(template,sheet);
@@ -50,7 +57,7 @@ function importPatientSheetTemplate(destination){
 function createEmptyMRSPatientSheet(){  
   
   const ui = SpreadsheetApp.getUi();
-  const response = ui.prompt('Créer une nouvelle fiche patient', 'Entrer le nom de la fiche', ui.ButtonSet.OK_CANCEL);
+  const response = ui.prompt('CrÃ©er une nouvelle fiche patient', 'Entrer le nom de la fiche', ui.ButtonSet.OK_CANCEL);
   
   if (response.getSelectedButton() == ui.Button.CANCEL){
     return;
@@ -67,6 +74,8 @@ function createEmptyMRSPatientSheet(){
 
 // copySheetRangeProtectionWarnings(template,sheet);
 // rename to generate
+// 2 sec per sheet when generating patients
+// 0.5 sec per sheet when transfering parameters
 function createMRSPatientSheet(){ 
   
   const currentSpreadSheet = SpreadsheetApp.getActiveSpreadsheet();
@@ -78,8 +87,8 @@ function createMRSPatientSheet(){
   // Demande de confirmation
   const ui = SpreadsheetApp.getUi();
   const result = ui.alert(
-     "Générer fiche(s) patient(s)",
-     `Voulez-vous générer ${sheetsAmount} fiche(s) patient(s).`,
+     "GÃ©nÃ©rer fiche(s) patient(s)",
+     `Voulez-vous gÃ©nÃ©rer ${sheetsAmount} fiche(s) patient(s).`,
       ui.ButtonSet.YES_NO);
 
   // Process the user's response.
@@ -90,7 +99,7 @@ function createMRSPatientSheet(){
   const localTemplate = importPatientSheetTemplate(currentSpreadSheet);
   localTemplate.setName(Utilities.formatDate(new Date(), "GMT+1", "yyyy-MM-dd") + "-temporary-template");
   
-  const rangeToUpdate = "B4:B12";
+  const rangeToUpdate = "B2:B12";
   const templateValues = localTemplate.getRange(rangeToUpdate).getValues();
   
   for (let key in currentRange)
@@ -105,16 +114,17 @@ function createMRSPatientSheet(){
     const templateValuesCopy = Array.from(templateValues);
     
     templateValuesCopy[0][0] = row[1];
-    templateValuesCopy[1][0] = row[2];
+    templateValuesCopy[2][0] = row[2];
     templateValuesCopy[3][0] = row[3];
-    templateValuesCopy[4][0] = row[4];
-    templateValuesCopy[5][0] = row[5];
+    templateValuesCopy[5][0] = row[4];
+    templateValuesCopy[6][0] = row[5];
     templateValuesCopy[7][0] = row[6];
-    templateValuesCopy[8][0] = row[7];
+    templateValuesCopy[9][0] = row[7];
+    templateValuesCopy[10][0] = row[8];
     
     newSheet.getRange(rangeToUpdate).setValues(templateValuesCopy)
         
-    currentSpreadSheet.toast(`La fiche patient ${sheetName} a été générée`,"Fiche générée");
+    currentSpreadSheet.toast(`La fiche patient ${sheetName} a Ã©tÃ© gÃ©nÃ©rÃ©e`,"Fiche gÃ©nÃ©rÃ©e");
   }
   
   currentSpreadSheet.deleteSheet(localTemplate)
@@ -142,8 +152,8 @@ function sendMRSPatientSheetByMailToGP() {
   // Demande de confirmation
   const ui = SpreadsheetApp.getUi();
   const result = ui.alert(
-     "Envoi de la fiche au médecin traitant",
-     `Voulez-vous envoyer la fiche de ${patientName} à l'adresse ${practitionerEmail}.`,
+     "Envoi de la fiche au mÃ©decin traitant",
+     `Voulez-vous envoyer la fiche de ${patientName} Ã  l'adresse ${practitionerEmail}.`,
       ui.ButtonSet.YES_NO); // TODO change to YES_CANCEL
 
   // Process the user's response.
@@ -155,8 +165,8 @@ function sendMRSPatientSheetByMailToGP() {
   const message = 
 `Docteur ${practitionerFullName},
   
-Vous trouverez en attaché le compte rendu journalier de votre patient ${patientName} hébergé ds notre MR(S).
-Nous vous invitons à en prendre connaissance et nous transmettre vos remarques éventuelles.
+Vous trouverez en attachÃ© le compte rendu journalier de votre patient ${patientName} hÃ©bergÃ© ds notre MR(S).
+Nous vous invitons Ã  en prendre connaissance et nous transmettre vos remarques Ã©ventuelles.
 
 Pour la MRS,
 ${nurseName}`;
@@ -166,7 +176,7 @@ ${nurseName}`;
   const pdf = convertSheetToPdf(currentSpreadSheet,currentSheet,"Fiche MRS de " + patientName);
   MailApp.sendEmail(practitionerEmail, subject, message, {attachments:pdf});
   
-  currentSpreadSheet.toast('Mail envoyé', 'Mail envoyé');
+  currentSpreadSheet.toast('Mail envoyÃ©', 'Mail envoyÃ©');
 }
 
 function archivePatientSheet(){
@@ -186,7 +196,8 @@ function archivePatientSheet(){
   }
   
   const folder = DriveApp.getFileById(currentSpreadSheet.getId()).getParents().next();
-  const archiveFolder = folder.getFoldersByName("Archives").next().getFoldersByName("Patients").next();
+
+  const archiveFolder = getFoldersByNameOrCreate(getFoldersByNameOrCreate(folder,"Archives"),"Patients");
   
   const pdf = convertSheetToPdf(currentSpreadSheet,sheet,Utilities.formatDate(new Date(), "GMT+1", "yyyy_MM") + "_" + sheetName);
   archiveFolder.createFile(pdf);
