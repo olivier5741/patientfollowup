@@ -81,3 +81,9 @@ function convertSheetToPdf(spreadsheet, sheet, pdfName, lastColumn = columnToLet
   return response.getBlob().setName(pdfName + '.pdf');
 }
 
+function getFoldersByNameOrCreate(mainFolder, name){
+  var path = mainFolder.getFoldersByName(name);
+  return path.hasNext() ? 
+    path.next() : mainFolder.createFolder(name);
+}
+
