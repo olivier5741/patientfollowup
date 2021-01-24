@@ -21,15 +21,6 @@ function patientSheetIdAndNameArray() {
            });
 }
 
-// @deprecated
-function patientSheetNames() {
-  const regExp = new RegExp("^[_z]+.*$")
-  return SpreadsheetApp.getActiveSpreadsheet()
-           .getSheets()
-           .map(s => s.getName())           
-           .filter(n => !regExp.exec(n));
-}
-
 function refreshPatientSheetNames(){
   const systemSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("zzz_system");
   const patientViewSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("zzz_system_patient_view");
@@ -56,7 +47,7 @@ function importPatientSheetTemplate(destination){
   
  // TODO change way of coding to call PropertiesService earlier 
  const documentProperties = PropertiesService.getDocumentProperties();
- const source = SpreadsheetApp.openByUrl(documentProperties.getProperty("patientSheetTemplateSpreadsheetUrl"))
+ const source = SpreadsheetApp.openByUrl(documentProperties.getProperty("templateSpreadsheetUrl"))
  const template = source.getSheetByName(documentProperties.getProperty("patientSheetTemplateSheetName"));
  const sheet = template.copyTo(destination);
  copySheetRangeProtectionWarnings(template,sheet);
@@ -83,6 +74,8 @@ function createEmptyMRSPatientSheet(){
 
 // copySheetRangeProtectionWarnings(template,sheet);
 // rename to generate
+// 2 sec per sheet when generating patients
+// 0.5 sec per sheet when transfering parameters
 function createMRSPatientSheet(){ 
   
   const currentSpreadSheet = SpreadsheetApp.getActiveSpreadsheet();
@@ -106,7 +99,7 @@ function createMRSPatientSheet(){
   const localTemplate = importPatientSheetTemplate(currentSpreadSheet);
   localTemplate.setName(Utilities.formatDate(new Date(), "GMT+1", "yyyy-MM-dd") + "-temporary-template");
   
-  const rangeToUpdate = "B4:B12";
+  const rangeToUpdate = "B2:B12";
   const templateValues = localTemplate.getRange(rangeToUpdate).getValues();
   
   for (let key in currentRange)
@@ -121,12 +114,13 @@ function createMRSPatientSheet(){
     const templateValuesCopy = Array.from(templateValues);
     
     templateValuesCopy[0][0] = row[1];
-    templateValuesCopy[1][0] = row[2];
+    templateValuesCopy[2][0] = row[2];
     templateValuesCopy[3][0] = row[3];
-    templateValuesCopy[4][0] = row[4];
-    templateValuesCopy[5][0] = row[5];
+    templateValuesCopy[5][0] = row[4];
+    templateValuesCopy[6][0] = row[5];
     templateValuesCopy[7][0] = row[6];
-    templateValuesCopy[8][0] = row[7];
+    templateValuesCopy[9][0] = row[7];
+    templateValuesCopy[10][0] = row[8];
     
     newSheet.getRange(rangeToUpdate).setValues(templateValuesCopy)
         
@@ -202,7 +196,8 @@ function archivePatientSheet(){
   }
   
   const folder = DriveApp.getFileById(currentSpreadSheet.getId()).getParents().next();
-  const archiveFolder = folder.getFoldersByName("Archives").next().getFoldersByName("Patients").next();
+
+  const archiveFolder = getFoldersByNameOrCreate(getFoldersByNameOrCreate(folder,"Archives"),"Patients");
   
   const pdf = convertSheetToPdf(currentSpreadSheet,sheet,Utilities.formatDate(new Date(), "GMT+1", "yyyy_MM") + "_" + sheetName);
   archiveFolder.createFile(pdf);
