@@ -1,6 +1,3 @@
-// TODO could also finish and protect the whole sheet, paraph and check if everything is done
-// TODO make sure sheet is a wardround before starting it
-
 function wardRoundCreated(){
   refreshWardRoundInSystem();
 }
@@ -177,9 +174,9 @@ function archiveWardRoundSheet(){
   }
   
   const folder = DriveApp.getFileById(currentSpreadSheet.getId()).getParents().next();
-  const archiveFolder = folder.getFoldersByName("Archives").next().getFoldersByName("Tournées").next();
+  const archiveFolder = getFoldersByNameOrCreate(getFoldersByNameOrCreate(folder,"Archives"),"Tournées");
   
-  const pdf = convertSheetToPdf(currentSpreadSheet,sheet,Utilities.formatDate(new Date(), "GMT+1", "yyyy_MM") + sheetName,"H");
+  const pdf = convertSheetToPdf(currentSpreadSheet,sheet,Utilities.formatDate(new Date(), "GMT+1", "yyyy_MM") + sheetName,"I");
   archiveFolder.createFile(pdf);
   
   currentSpreadSheet.deleteSheet(sheet);
