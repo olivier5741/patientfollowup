@@ -9,6 +9,20 @@ function initialize(libraryName = "", localScriptProperties = PropertiesService.
     prefix = prefix + ".";
   }
   
+  const documentProperties = PropertiesService.getDocumentProperties();
+  
+  const propTable = [
+    ["templateSpreadsheetUrl", "https://docs.google.com/spreadsheets/d/19hR21cKs-ho_L7WvwqE1obdkCgE802athUov3CYe8bc/edit"],
+    ["patientSheetTemplateSheetName", "zzz_template_patient_1.5.0"],
+    ["wardRoundTemplateSheetName", "zzz_template_tour_1.5.0"]
+  ];
+
+  for(const i in propTable){
+    const p = documentProperties.getProperty(propTable[i][0]);
+    if(!p)
+      documentProperties.setProperty(propTable[i][0],propTable[i][1])
+  }
+  
   // Create menu
   const ui = SpreadsheetApp.getUi();
   
